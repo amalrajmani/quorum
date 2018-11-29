@@ -126,7 +126,6 @@ func BenchmarkDiscovery_64_4(b *testing.B)  { benchmarkDiscovery(b, 64, 4) }
 func BenchmarkDiscovery_128_4(b *testing.B) { benchmarkDiscovery(b, 128, 4) }
 func BenchmarkDiscovery_256_4(b *testing.B) { benchmarkDiscovery(b, 256, 4) }
 
-
 func testDiscoverySimulationDockerAdapter(t *testing.T, nodes, conns int) {
 	adapter, err := adapters.NewDockerAdapter()
 	if err != nil {
@@ -553,8 +552,8 @@ func newService(ctx *adapters.ServiceContext) (node.Service, error) {
 	kp.MinProxBinSize = testMinProxBinSize
 
 	if ctx.Config.Reachable != nil {
-		kp.Reachable = func(o network.OverlayAddr) bool {
-			return ctx.Config.Reachable(o.(*network.BzzAddr).ID())
+		kp.Reachable = func(o *network.BzzAddr) bool {
+			return ctx.Config.Reachable(o.ID())
 		}
 	}
 	kad := network.NewKademlia(addr.Over(), kp)

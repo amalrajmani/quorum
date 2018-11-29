@@ -45,7 +45,7 @@ func NewBlockValidator(config *params.ChainConfig, blockchain *BlockChain, engin
 	return validator
 }
 
-// ValidateBody validates the given block's uncles and verifies the the block
+// ValidateBody validates the given block's uncles and verifies the block
 // header's transaction and uncle roots. The headers are assumed to be already
 // validated at this point.
 func (v *BlockValidator) ValidateBody(block *types.Block) error {
@@ -105,7 +105,7 @@ func (v *BlockValidator) ValidateState(block, parent *types.Block, statedb *stat
 
 // CalcGasLimit computes the gas limit of the next block after parent.
 // This is miner strategy, not consensus protocol.
-func CalcGasLimit(parent *types.Block) uint64 {
+func CalcGasLimit(parent *types.Block, gasFloor, gasCeil uint64) uint64 {
 	// contrib = (parentGasUsed * 3 / 2) / 4096
 	contrib := (parent.GasUsed() + parent.GasUsed()/2) / params.GasLimitBoundDivisor
 
@@ -125,10 +125,15 @@ func CalcGasLimit(parent *types.Block) uint64 {
 	}
 	// however, if we're now below the target (TargetGasLimit) we increase the
 	// limit as much as we can (parentGasLimit / 4096 -1)
-	if limit < params.TargetGasLimit {
+	if limit < gasFloor {
 		limit = parent.GasLimit() + decay
-		if limit > params.TargetGasLimit {
-			limit = params.TargetGasLimit
+		if limit > gasFloor {
+			limit = gasFloor
+		}
+	} else if limit > gasCeil {
+		limit = parent.GasLimit() - decay
+		if limit < gasCeil {
+			limit = gasCeil
 		}
 	}
 	return limit
