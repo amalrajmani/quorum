@@ -12,6 +12,6 @@ If you'd like to contribute to go-ethereum please fork, fix, commit and
 send a pull request. Commits which do not comply with the coding standards
 are ignored (use gofmt!).
 
-See [Developers' Guide](https://github.com/ethereum/go-ethereum/wiki/Developers'-Guide)
-for more details on configuring your environment, testing, and
-dependency management.
+Please see the [Developers' Guide](https://github.com/ethereum/go-ethereum/wiki/Developers'-Guide)
+for more details on configuring your environment, managing project dependencies
+and testing procedures.
