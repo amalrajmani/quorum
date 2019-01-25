@@ -18,7 +18,7 @@ addons:
     - sourceline: ppa:openjdk-r/ppa
     packages:
     - openjdk-8-jdk
-    - dpkg # fixes issue with dpkg-deb error due to travis image issue
+    - dpkg # fixes issue with dpkg-deb error due to travis image
     - openssh-client
     - dnsutils
     - maven
