@@ -397,13 +397,14 @@ func (d *Downloader) synchronise(id string, hash common.Hash, td *big.Int, mode 
 		return errUnknownPeer
 	}
 	if d.mode == BoundedFullSync {
-		err := d.syncWithPeerUntil(p, hash, td)
-		if err == nil {
-			d.processFullSyncContent()
-		}
-		return err
+		/*		err := d.syncWithPeerUntil(p, hash, td)
+				if err == nil {
+					d.processFullSyncContent()
+				}
+				return err
+			}*/
+		return d.syncWithPeerUntil(p, hash, td)
 	}
-	return d.syncWithPeer(p, hash, td)
 }
 
 // syncWithPeer starts a block synchronization based on the hash chain from the
@@ -1697,6 +1698,7 @@ func (d *Downloader) syncWithPeerUntil(p *peerConnection, hash common.Hash, td *
 		func() error { return d.fetchBodies(localHeight + 1) },
 		func() error { return d.fetchReceipts(localHeight + 1) }, // Receipts are only retrieved during fast sync
 		func() error { return d.processHeaders(localHeight+1, pivot, td) },
+		d.processFullSyncContent,
 	}
 	return d.spawnSync(fetchers)
 }
