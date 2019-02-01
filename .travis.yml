@@ -19,12 +19,9 @@ addons:
     packages:
     - openjdk-8-jdk
     - dpkg # fixes issue with dpkg-deb error due to travis image
-    - openssh-client
-    - dnsutils
     - maven
     - solc
-    - jq
-    - curl
+
 
 before_install:
     - if [ $TRAVIS_OS_NAME = linux ]; then git clone https://github.com/amalrajmani/quorum-acceptance-tests.git $TRAVIS_HOME/quorum-acceptance-tests; fi;
