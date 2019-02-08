@@ -10,19 +10,6 @@ env:
     global:
       - TESSERA_JAR="$HOME/tessera.jar"
 
-addons:
-  apt:
-    update: true
-    sources:
-    - sourceline: ppa:ethereum/ethereum
-    - sourceline: ppa:openjdk-r/ppa
-    packages:
-    - openjdk-8-jdk
-    - dpkg # fixes issue with dpkg-deb error due to travis image
-    - maven
-    - solc
-
-
 before_install:
     - if [ $TRAVIS_OS_NAME = linux ]; then git clone https://github.com/amalrajmani/quorum-acceptance-tests.git $TRAVIS_HOME/quorum-acceptance-tests; fi;
     - if [ $TRAVIS_OS_NAME = linux ]; then sudo chmod 755 $TRAVIS_HOME/quorum-acceptance-tests/src/travis/install-linux.sh; fi;
