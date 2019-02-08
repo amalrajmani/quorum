@@ -23,6 +23,8 @@ matrix:
       dist: trusty
       sudo: true
       go: 1.9.x
+      git:
+          submodules: false
 
       cache:
       directories:
@@ -41,6 +43,8 @@ matrix:
       dist: trusty
       sudo: true
       go: 1.9.x
+      git:
+          submodules: false
 
       directories:
       - $HOME/.m2
@@ -57,6 +61,8 @@ matrix:
       dist: trusty
       sudo: true
       go: 1.9.x
+      git:
+          submodules: false
 
       directories:
       - $HOME/.m2
