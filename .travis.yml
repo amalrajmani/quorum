@@ -26,53 +26,44 @@ before_install:
 
 matrix:
   include:
-  - name: linux-raft
+  #raft consensus
+  - if: tag IS blank
     os: linux
     dist: trusty
     git:
       submodules: false
-
     cache:
     directories:
     - $HOME/.m2
-
     env:
     - TF_VAR_consensus_mechanism=raft
-
     install: $TRAVIS_HOME/quorum-cloud/travis/install-linux.sh
-
     script: $TRAVIS_HOME/quorum-cloud/travis/script-linux.sh
 
-  - name: linux-istanbul
+  # istanbul - consensus
+  - if: tag IS blank
       os: linux
       dist: trusty
       git:
         submodules: false
-
       directories:
       - $HOME/.m2
-
       env:
       - TF_VAR_consensus_mechanism=istanbul
-
       install: $TRAVIS_HOME/quorum-cloud/travis/install-linux.sh
-
       script: $TRAVIS_HOME/quorum-cloud/travis/script-linux.sh
 
-  - name: linux-clique
+  #clique - consensus
+  - if: tag IS blank
     os: linux
     dist: trusty
     git:
       submodules: false
-
     directories:
     - $HOME/.m2
-
     env:
     - TF_VAR_consensus_mechanism=clique
-
     install: $TRAVIS_HOME/quorum-cloud/travis/install-linux.sh
-
     script: $TRAVIS_HOME/quorum-cloud/travis/script-linux.sh
 
 
@@ -85,7 +76,7 @@ matrix:
         - sudo chown root:$USER /etc/fuse.conf
         - go run build/ci.go install
         - go run build/ci.go test -coverage $TEST_PACKAGES
-    - if: tag IS blank
+  - if: tag IS blank
       os: osx
       osx_image: xcode9.2 # so we don't have to deal with Kernel Extension Consent UI which is never possible in CI
       script:
@@ -95,7 +86,7 @@ matrix:
         - go run build/ci.go install
         - go run build/ci.go test -coverage $TEST_PACKAGES
 
-    - if: tag IS present
+  - if: tag IS present
       os: linux
       dist: xenial
       env: OUTPUT_FILE=geth_${TRAVIS_TAG}_linux_amd64.tar.gz
@@ -104,7 +95,7 @@ matrix:
         - sudo mkdir -p /dist
         - cd build/bin
         - sudo tar cfvz /dist/${OUTPUT_FILE} geth
-    - if: tag IS present
+  - if: tag IS present
       os: osx
       osx_image: xcode9.2
       env: OUTPUT_FILE=geth_${TRAVIS_TAG}_darwin_amd64.tar.gz
