@@ -18,15 +18,22 @@ package vm
 
 import (
 	"crypto/sha256"
-	"errors"
 	"math/big"
 
+	"bytes"
+	"encoding/binary"
+	"errors"
+	"fmt"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/bn256"
+	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
 	"golang.org/x/crypto/ripemd160"
+	"io/ioutil"
+	"net/http"
+	"strconv"
 )
 
 // PrecompiledContract is the basic interface for native Go contracts. The implementation
@@ -44,6 +51,7 @@ var PrecompiledContractsHomestead = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{2}): &sha256hash{},
 	common.BytesToAddress([]byte{3}): &ripemd160hash{},
 	common.BytesToAddress([]byte{4}): &dataCopy{},
+	common.BytesToAddress([]byte{9}): &myCustomFunc{},
 }
 
 // PrecompiledContractsByzantium contains the default set of pre-compiled Ethereum
@@ -57,6 +65,7 @@ var PrecompiledContractsByzantium = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{6}): &bn256Add{},
 	common.BytesToAddress([]byte{7}): &bn256ScalarMul{},
 	common.BytesToAddress([]byte{8}): &bn256Pairing{},
+	common.BytesToAddress([]byte{9}): &myCustomFunc{},
 }
 
 // RunPrecompiledContract runs and evaluates the output of a precompiled contract.
@@ -144,6 +153,86 @@ func (c *dataCopy) RequiredGas(input []byte) uint64 {
 }
 func (c *dataCopy) Run(in []byte) ([]byte, error) {
 	return in, nil
+}
+
+/*
+
+//SAMPLE SOLC CONTRACT TO TEST Calling PRECOMPILE functions from SOLC
+pragma solidity ^0.5.0;
+contract test {
+    uint[1] r;
+    uint a;
+    uint b;
+
+    function geta() public view returns (uint) {
+        return a;
+    }
+
+    function getb() public view returns (uint) {
+        return b;
+    }
+
+    function getr() public view returns (uint x) {
+        return r[0];
+    }
+
+    function myfunc(uint x, uint y) public {
+      uint[2] memory input;
+      uint[1] memory k;
+      input[0] = x;
+      input[1] = y;
+      assembly {
+        // call myfunc precompile
+        if iszero(call(not(0), 0x09, 0, input, 0x40, k, 0x20)) {
+          revert(0, 0)
+        }
+      }
+      r[0] = k[0];
+      a = x;
+      b = y;
+    }
+
+}
+
+*/
+
+// data copy implemented as a native contract.
+type myCustomFunc struct{}
+
+// RequiredGas returns the gas required to execute the pre-compiled contract.
+//
+// This method does not require any overflow checking as the input size gas costs
+// required for anything significant is so high it's impossible to pay for.
+func (c *myCustomFunc) RequiredGas(input []byte) uint64 {
+	return uint64(len(input)+31)/32*params.IdentityPerWordGas + params.IdentityBaseGas
+}
+func (c *myCustomFunc) Run(input []byte) ([]byte, error) {
+	log.Info("AJ-myCustFunc1", "input", input)
+	arg1 := new(big.Int).SetBytes(getData(input, 0, 32)).Int64()
+	arg2 := new(big.Int).SetBytes(getData(input, 32, 32)).Int64()
+	log.Info("AJ-myCustFunc2", "arg1", arg1, "arg2", arg2)
+	req, _ := http.NewRequest("GET", "http://localhost:8080/add", nil)
+	q := req.URL.Query()
+	q.Add("a", fmt.Sprintf("%d", arg1))
+	q.Add("b", fmt.Sprintf("%d", arg2))
+	req.URL.RawQuery = q.Encode()
+	log.Info("AJ-myCustFunc3-call", "url", req.URL.String())
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Info("Errored when sending request to the server")
+		return nil, errors.New("failed to execute at server")
+	}
+	resp_body, _ := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	r1, _ := strconv.Atoi(string(resp_body))
+	r := uint32(r1)
+	buf := new(bytes.Buffer)
+	err1 := binary.Write(buf, binary.BigEndian, r)
+	padArr := make([]byte, 32-len(buf.Bytes()))
+	r32arr := append(padArr, buf.Bytes()...)
+	log.Info("AJ-myCustFunc4-got result", "err", err1, "buf", buf.Bytes(), "r32arr", r32arr, "r1", r1, "str", string(resp_body))
+	return r32arr, nil
 }
 
 // bigModExp implements a native big integer exponential modular operation.
