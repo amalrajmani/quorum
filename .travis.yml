@@ -40,3 +40,17 @@ matrix:
     - TF_VAR_consensus_mechanism=raft
     install: $TRAVIS_HOME/quorum-cloud/travis/install-linux.sh
     script: $TRAVIS_HOME/quorum-cloud/travis/script-linux.sh
+
+  #istanbul consensus
+  - if: tag IS blank
+    os: linux
+    dist: trusty
+    git:
+      submodules: false
+    cache:
+    directories:
+    - $HOME/.m2
+    env:
+    - TF_VAR_consensus_mechanism=istanbul
+    install: $TRAVIS_HOME/quorum-cloud/travis/install-linux.sh
+    script: $TRAVIS_HOME/quorum-cloud/travis/script-linux.sh
