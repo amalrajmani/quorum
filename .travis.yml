@@ -28,8 +28,7 @@ before_install:
 matrix:
   include:
   #raft consensus
-  #- if: tag IS blank
-  - name: c1
+  - if: tag IS blank
     os: linux
     dist: trusty
     git:
