@@ -28,7 +28,8 @@ before_install:
 matrix:
   include:
   #raft consensus
-  - if: tag IS blank
+  #- if: tag IS blank
+  - name: c1
     os: linux
     dist: trusty
     git:
@@ -42,7 +43,8 @@ matrix:
     script: $TRAVIS_HOME/quorum-cloud/travis/script-linux.sh
 
   # istanbul - consensus
-  - if: tag IS blank
+  #- if: tag IS blank
+  - name: c2
       os: linux
       dist: trusty
       git:
@@ -55,7 +57,8 @@ matrix:
       script: $TRAVIS_HOME/quorum-cloud/travis/script-linux.sh
 
   #clique - consensus
-  - if: tag IS blank
+  #- if: tag IS blank
+  - name: c3
     os: linux
     dist: trusty
     git:
@@ -68,7 +71,8 @@ matrix:
     script: $TRAVIS_HOME/quorum-cloud/travis/script-linux.sh
 
 
-  - if: tag IS blank
+  #- if: tag IS blank
+   - name: linux
       os: linux
       dist: xenial
       script:
@@ -77,7 +81,8 @@ matrix:
         - sudo chown root:$USER /etc/fuse.conf
         - go run build/ci.go install
         - go run build/ci.go test -coverage $TEST_PACKAGES
-  - if: tag IS blank
+  #- if: tag IS blank
+   - name: oosx
       os: osx
       osx_image: xcode9.2 # so we don't have to deal with Kernel Extension Consent UI which is never possible in CI
       script:
