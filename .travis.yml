@@ -20,7 +20,7 @@ env:
 matrix:
   include:
   #raft consensus
-  - if: tag IS blank AND type = pull_request
+  - if: tag IS blank # AND type = pull_request
     name: acceptance-test-raft
     os: linux
     dist: trusty
@@ -38,7 +38,7 @@ matrix:
       - $TRAVIS_BUILD_DIR/build/travis-run-acceptance-test-linux.sh
 
   #istanbul consensus
-  - if: tag IS blank AND type = pull_request
+  - if: tag IS blank # AND type = pull_request
     name: acceptance-test-istanbul
     os: linux
     dist: trusty
@@ -55,7 +55,7 @@ matrix:
       - export PATH=$TRAVIS_BUILD_DIR/build/bin:$PATH
       - $TRAVIS_BUILD_DIR/build/travis-run-acceptance-test-linux.sh
   #clique consensus
-  - if: tag IS blank AND type = pull_request
+  - if: tag IS blank # AND type = pull_request
     name: acceptance-test-clique
     os: linux
     dist: trusty
