@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-# start network and run acceptance tests
+# start network and run acceptance tests t
 echo "---> start quorum network for consensus ${TF_VAR_consensus_mechanism} ..."
 export PATH=${TRAVIS_BUILD_DIR}/build/bin:$PATH
 export TESSERA_JAR=${HOME}/tessera.jar

@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-# install geth and dependencies for acceptance tests
+# install geth and dependencies for acceptance tests te
 echo "---> install started ..."
 echo "---> installing tools ..."
 sudo apt-get update
