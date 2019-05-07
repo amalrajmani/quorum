@@ -141,7 +141,7 @@ func (s *Server) RegisterName(name string, rcvr interface{}) error {
 // an EOF). It executes requests in parallel when singleShot is false.
 func (s *Server) serveRequest(ctx context.Context, codec ServerCodec, singleShot bool, options CodecOption) error {
 	var pend sync.WaitGroup
-
+	//log.Info("AJ-serveRequest", "Ctx", ctx, "codec", codec, "options", options)
 	defer func() {
 		if err := recover(); err != nil {
 			const size = 64 << 10
@@ -175,6 +175,7 @@ func (s *Server) serveRequest(ctx context.Context, codec ServerCodec, singleShot
 	// test if the server is ordered to stop
 	for atomic.LoadInt32(&s.run) == 1 {
 		reqs, batch, err := s.readRequest(codec)
+		//log.Info("AJ-serveRequest - read req","reqs", reqs, "batch", batch, "err", err)
 		if err != nil {
 			// If a parsing error occurred, send an error
 			if err.Error() != "EOF" {
@@ -204,8 +205,10 @@ func (s *Server) serveRequest(ctx context.Context, codec ServerCodec, singleShot
 		// If a single shot request is executing, run and return immediately
 		if singleShot {
 			if batch {
+				log.Info("AJ-singleShot batch")
 				s.execBatch(ctx, codec, reqs)
 			} else {
+				log.Info("AJ-singleShot NO batch", "reqs[0]", reqs[0])
 				s.exec(ctx, codec, reqs[0])
 			}
 			return nil
@@ -278,22 +281,26 @@ func (s *Server) handle(ctx context.Context, codec ServerCodec, req *serverReque
 		if len(req.args) >= 1 && req.args[0].Kind() == reflect.String {
 			notifier, supported := NotifierFromContext(ctx)
 			if !supported { // interface doesn't support subscriptions (e.g. http)
+				log.Info("AJ-ERR @111")
 				return codec.CreateErrorResponse(&req.id, &callbackError{ErrNotificationsUnsupported.Error()}), nil
 			}
 
 			subid := ID(req.args[0].String())
 			if err := notifier.unsubscribe(subid); err != nil {
+				log.Info("AJ-ERR @112")
 				return codec.CreateErrorResponse(&req.id, &callbackError{err.Error()}), nil
 			}
-
+			log.Info("AJ-ERR @113")
 			return codec.CreateResponse(req.id, true), nil
 		}
+		log.Info("AJ-ERR @114")
 		return codec.CreateErrorResponse(&req.id, &invalidParamsError{"Expected subscription id as first argument"}), nil
 	}
 
 	if req.callb.isSubscribe {
 		subid, err := s.createSubscription(ctx, codec, req)
 		if err != nil {
+			log.Info("AJ-ERR @115")
 			return codec.CreateErrorResponse(&req.id, &callbackError{err.Error()}), nil
 		}
 
@@ -302,7 +309,7 @@ func (s *Server) handle(ctx context.Context, codec ServerCodec, req *serverReque
 			notifier, _ := NotifierFromContext(ctx)
 			notifier.activate(subid, req.svcname)
 		}
-
+		log.Info("AJ-ERR @116")
 		return codec.CreateResponse(req.id, subid), activateSub
 	}
 
@@ -311,6 +318,7 @@ func (s *Server) handle(ctx context.Context, codec ServerCodec, req *serverReque
 		rpcErr := &invalidParamsError{fmt.Sprintf("%s%s%s expects %d parameters, got %d",
 			req.svcname, serviceMethodSeparator, req.callb.method.Name,
 			len(req.callb.argTypes), len(req.args))}
+		log.Info("AJ-ERR @117")
 		return codec.CreateErrorResponse(&req.id, rpcErr), nil
 	}
 
@@ -325,19 +333,22 @@ func (s *Server) handle(ctx context.Context, codec ServerCodec, req *serverReque
 	if len(req.args) > 0 {
 		arguments = append(arguments, req.args...)
 	}
-
+	log.Info("AJ-req.callb.method.Func.Call", "args", arguments)
 	// execute RPC method and return result
 	reply := req.callb.method.Func.Call(arguments)
 	if len(reply) == 0 {
+		log.Info("AJ-ERR @118")
 		return codec.CreateResponse(req.id, nil), nil
 	}
 	if req.callb.errPos >= 0 { // test if method returned an error
 		if !reply[req.callb.errPos].IsNil() {
 			e := reply[req.callb.errPos].Interface().(error)
+			log.Info("AJ-ERR @119")
 			res := codec.CreateErrorResponse(&req.id, &callbackError{e.Error()})
 			return res, nil
 		}
 	}
+	log.Info("AJ-ERR @120")
 	return codec.CreateResponse(req.id, reply[0].Interface()), nil
 }
 
@@ -346,8 +357,10 @@ func (s *Server) exec(ctx context.Context, codec ServerCodec, req *serverRequest
 	var response interface{}
 	var callback func()
 	if req.err != nil {
+		log.Info("AJ-exec - error, create error repsonse")
 		response = codec.CreateErrorResponse(&req.id, req.err)
 	} else {
+		log.Info("AJ-exec - handle callback")
 		response, callback = s.handle(ctx, codec, req)
 	}
 
@@ -395,8 +408,10 @@ func (s *Server) execBatch(ctx context.Context, codec ServerCodec, requests []*s
 func (s *Server) readRequest(codec ServerCodec) ([]*serverRequest, bool, Error) {
 	// parse here
 	// Web socket validation here
+	//log.Info("AJ-readRequest")
 	reqs, batch, err := codec.ReadRequestHeaders()
 	if err != nil {
+		log.Info("AJ-readRequest headers failed", "err", err)
 		return nil, batch, err
 	}
 

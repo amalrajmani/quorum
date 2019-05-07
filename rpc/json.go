@@ -140,9 +140,10 @@ func isBatch(msg json.RawMessage) bool {
 func (c *jsonCodec) ReadRequestHeaders() ([]rpcRequest, bool, Error) {
 	c.decMu.Lock()
 	defer c.decMu.Unlock()
-
+	//log.Info("AJ-ReadRequestHeaders")
 	var incomingMsg json.RawMessage
 	if err := c.decode(&incomingMsg); err != nil {
+		//log.Info("AJ-ReadRequestHeaders decode failed", "err", err)
 		return nil, false, &invalidRequestError{err.Error()}
 	}
 	if isBatch(incomingMsg) {
@@ -172,6 +173,7 @@ func checkReqId(reqId json.RawMessage) error {
 // the request could not be parsed.
 func parseRequest(incomingMsg json.RawMessage) ([]rpcRequest, bool, Error) {
 	var in jsonRequest
+	log.Info("AJ-parseRequest")
 	if err := json.Unmarshal(incomingMsg, &in); err != nil {
 		return nil, false, &invalidMessageError{err.Error()}
 	}

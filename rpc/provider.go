@@ -17,24 +17,30 @@ func (l *EnterpriseSecurityProvider) IsClientAuthorized(request rpcRequest) bool
 	if token == "" {
 		return false
 	}
-
+	log.Info("AJ-entr IsClientAuthorized1", "rpc", request)
 	// check cache first
 	if entry, ok := l.tokensCache.Get(token); ok {
 		introspectResponse := entry.(IntrospectResponse)
+		log.Info("AJ-entr IsClientAuthorized2 - in cache")
+
 		if IsTokenExpired(introspectResponse.Created, introspectResponse.Expiration) {
+			log.Info("AJ-entr IsClientAuthorized3 - expired")
 			l.tokensCache.Remove(token)
 		} else {
 			scopes, err := parseScopeStr(introspectResponse.Scope, " ")
 			if err != nil {
+				log.Info("AJ-entr IsClientAuthorized4 err parsing scope")
 				return false
 			}
 
 			// search through scope -Optimize lookup
 			for _, scope := range scopes {
 				if isRequestAuthorized(&scope, request) {
+					log.Info("AJ-entr IsClientAuthorized5 - permission OK")
 					return true
 				}
 			}
+			log.Info("AJ-entr IsClientAuthorized6 - permission NOT OK")
 			return false
 		}
 	}
@@ -44,8 +50,10 @@ func (l *EnterpriseSecurityProvider) IsClientAuthorized(request rpcRequest) bool
 		Token:         token,
 		TokenTypeHint: "access_token",
 	}, &l.client, l.SecurityConfig)
+	log.Info("AJ-entr IsClientAuthorized7 - introspect response requested", "resp", response)
 
 	if err != nil {
+		log.Info("AJ-entr IsClientAuthorized8 - error parsing request resp")
 		return false
 	}
 	if response.Active {
@@ -53,44 +61,52 @@ func (l *EnterpriseSecurityProvider) IsClientAuthorized(request rpcRequest) bool
 		l.tokensCache.Add(token, *response)
 		scopes, err := parseScopeStr(response.Scope, " ")
 		if err != nil {
+			log.Info("AJ-entr IsClientAuthorized9 parsing scope failed")
 			return false
 		}
 
 		// search through scope -Optimize lookup
 		for _, scope := range scopes {
 			if isRequestAuthorized(&scope, request) {
+				log.Info("AJ-entr IsClientAuthorized10 - permission OK")
 				return true
 			}
 		}
+		log.Info("AJ-entr IsClientAuthorized11 - permission NOT OK")
 		return false
 
 	}
+	log.Info("AJ-entr IsClientAuthorized12 - response not active")
 	return false
 }
 
 //IsClientAuthorized Parse the RPC Request, Call send Introspect Request & Parse results
 func (l *LocalSecurityProvider) IsClientAuthorized(request rpcRequest) bool {
+	log.Info("AJ-local IsClientAuthorized13", "rpc", request)
 	// Authenticate token
 	token := request.token
 	client := l.GetClientByToken(&token)
 
 	if client == nil {
+		log.Info("AJ-local IsClientAuthorized14 client missing")
 		return false
 	}
 
 	// check request scope token scope
 	scopes, err := parseScopeStr(client.Scope, ",")
 	if err != nil {
+		log.Info("AJ-local IsClientAuthorized15 error parsing scope")
 		return false
 	}
 
 	// search through scope -Optimize lookup
 	for _, scope := range scopes {
 		if isRequestAuthorized(&scope, request) {
+			log.Info("AJ-local IsClientAuthorized16 - permission OK", "scopes", scopes, "cli", client)
 			return true
 		}
 	}
-
+	log.Info("AJ-local IsClientAuthorized17 - permission NOT OK", "scopes", scopes, "cli", client)
 	return false
 }
 

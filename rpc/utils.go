@@ -26,6 +26,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/ethereum/go-ethereum/log"
 	"io"
 	"io/ioutil"
 	"math/rand"
@@ -343,9 +344,13 @@ func getIntrospectResponse(request *IntrospectRequest, client *http.Client, cfg 
 	params.Add("token", request.Token)
 	params.Add("token_type_hint", request.TokenTypeHint)
 
+	providerClientId := ""
+	providerClientSec := ""
+
 	if cfg.ProviderInformation.EnterpriseProviderIntrospectionClientIdHeader != "" {
 		// support env variables
-		providerClientId := os.Getenv(cfg.ProviderInformation.EnterpriseProviderIntrospectionClientIdEnvVar)
+		providerClientId = os.Getenv(cfg.ProviderInformation.EnterpriseProviderIntrospectionClientIdEnvVar)
+		log.Info("AJ-clientID", "id", providerClientId)
 		if providerClientId == "" {
 			providerClientId = cfg.ProviderInformation.EnterpriseProviderIntrospectionClientId
 		}
@@ -360,7 +365,8 @@ func getIntrospectResponse(request *IntrospectRequest, client *http.Client, cfg 
 	if cfg.ProviderInformation.EnterpriseProviderIntrospectionClientSecretHeader != "" {
 
 		// support env variables
-		providerClientSec := os.Getenv(cfg.ProviderInformation.EnterpriseProviderIntrospectionClientSecretEnvVar)
+		providerClientSec = os.Getenv(cfg.ProviderInformation.EnterpriseProviderIntrospectionClientSecretEnvVar)
+		log.Info("AJ-clientSECRET", "sec", providerClientSec)
 		if providerClientSec == "" {
 			providerClientSec = cfg.ProviderInformation.EnterpriseProviderIntrospectionClientSecret
 		}
@@ -382,6 +388,7 @@ func getIntrospectResponse(request *IntrospectRequest, client *http.Client, cfg 
 	if cfg.ProviderInformation.EnterpriseProviderIntrospectionMethod != "" {
 		requestMethod = cfg.ProviderInformation.EnterpriseProviderIntrospectionMethod
 	}
+	log.Info("AJ-params", "prm", params)
 	encodedParams := params.Encode()
 	req, err := http.NewRequest(requestMethod, serviceURL.String(), strings.NewReader(encodedParams))
 
@@ -390,7 +397,8 @@ func getIntrospectResponse(request *IntrospectRequest, client *http.Client, cfg 
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Length", strconv.Itoa(len(encodedParams)))
-
+	//req.SetBasicAuth(providerClientId, providerClientSec)
+	log.Info("AJ-req", "req", req)
 	if err != nil {
 		return nil, err
 	}
@@ -402,6 +410,7 @@ func getIntrospectResponse(request *IntrospectRequest, client *http.Client, cfg 
 	}
 	defer resp.Body.Close()
 
+	log.Info("AJ-resp", "resp", resp)
 	if resp.StatusCode != 200 {
 		return nil, fmt.Errorf("un excpected status code")
 	}

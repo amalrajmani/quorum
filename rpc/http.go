@@ -261,6 +261,7 @@ func (srv *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), code)
 		return
 	}
+	//log.Info("AJ-serveHTTP - request validated","req", r)
 	// All checks passed, create a codec that reads direct from the request body
 	// untilEOF and writes the response to w and order the server to process a
 	// single request.
@@ -277,10 +278,11 @@ func (srv *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	body := io.LimitReader(r.Body, maxRequestContentLength)
 	codec := NewJSONCodec(&httpReadWriteNopCloser{body, w})
+	//log.Info("AJ-ServeHTTP - JsonCodec created")
 	defer codec.Close()
 
 	w.Header().Set("content-type", contentType)
-
+	//log.Info("AJ-ServeHTTP - serveSingleRequest")
 	srv.ServeSingleRequest(ctx, codec, OptionMethodInvocation)
 }
 
